@@ -592,11 +592,13 @@ def train(args):
         'batch_size': args.batch_size
     }
 
-    estimator = tf.estimator.Estimator(
-        model_fn,
-        use_tpu=True,
-        params=params,
-        config=run_config)
+    estimator = tf.contrib.tpu.TPUEstimator(
+      use_tpu=True,
+      model_fn=model_fn,
+      config=run_config,
+      train_batch_size=FLAGS.batch_size,
+      eval_batch_size=1,
+      predict_batch_size=1)
 
     if args.do_train and args.do_eval:
         # 1. 将数据转化为tf_record 数据
