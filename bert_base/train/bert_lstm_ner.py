@@ -382,7 +382,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         # 使用参数构建模型,input_idx 就是输入的样本idx表示，label_ids 就是标签的idx表示
         total_loss, logits, trans, pred_ids = create_model(
             bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
-            num_labels, False, args.dropout_rate, args.lstm_size, args.cell, args.num_layers)
+            num_labels, True, args.dropout_rate, args.lstm_size, args.cell, args.num_layers)
 
         tvars = tf.trainable_variables()
         # 加载BERT模型
@@ -407,7 +407,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         if mode == tf.estimator.ModeKeys.TRAIN:
             #train_op = optimizer.optimizer(total_loss, learning_rate, num_train_steps)
             train_op = optimization.create_optimizer(
-                 total_loss, learning_rate, num_train_steps, num_warmup_steps, False)
+                 total_loss, learning_rate, num_train_steps, num_warmup_steps, True)
             hook_dict = {}
             hook_dict['loss'] = total_loss
             hook_dict['global_steps'] = tf.train.get_or_create_global_step()
