@@ -391,11 +391,11 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                  modeling.get_assignment_map_from_checkpoint(tvars,
                                                              init_checkpoint)
 
-            def tpu_scaffold():
-                tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-            return tf.train.Scaffold()
+        def tpu_scaffold():
+           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+           return tf.train.Scaffold()
 
-            scaffold_fn = tpu_scaffold
+        scaffold_fn = tpu_scaffold
 
         # 打印变量名
         # logger.info("**** Trainable Variables ****")
