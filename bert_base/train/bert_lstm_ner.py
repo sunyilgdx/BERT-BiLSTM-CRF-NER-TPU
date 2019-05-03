@@ -600,8 +600,8 @@ def train(args):
     }
 
     estimator = tf.estimator.Estimator(
-        use_tpu=True,
         model_fn,
+        use_tpu=True,
         params=params,
         config=run_config)
 
