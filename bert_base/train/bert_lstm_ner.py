@@ -390,7 +390,12 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
             (assignment_map, initialized_variable_names) = \
                  modeling.get_assignment_map_from_checkpoint(tvars,
                                                              init_checkpoint)
-            tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+
+            def tpu_scaffold():
+                tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+            return tf.train.Scaffold()
+
+            scaffold_fn = tpu_scaffold
 
         # 打印变量名
         # logger.info("**** Trainable Variables ****")
@@ -418,7 +423,8 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                 mode=mode,
                 loss=total_loss,
                 train_op=train_op,
-                training_hooks=[logging_hook])
+                training_hooks=[logging_hook],
+                scaffold_fn = scaffold_fn)
 
         elif mode == tf.estimator.ModeKeys.EVAL:
             # 针对NER ,进行了修改
@@ -431,12 +437,14 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
             output_spec = tf.estimator.EstimatorSpec(
                 mode=mode,
                 loss=total_loss,
-                eval_metric_ops=eval_metrics
+                eval_metric_ops=eval_metrics,
+                scaffold_fn = scaffold_fn
             )
         else:
             output_spec = tf.estimator.EstimatorSpec(
                 mode=mode,
-                predictions=pred_ids
+                predictions=pred_ids,
+                scaffold_fn = scaffold_fn
             )
         return output_spec
 
@@ -527,6 +535,10 @@ def train(args):
     tokenizer = tokenization.FullTokenizer(
         vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
 
+    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+        args.tpu_name, zone=args.tpu_zone, project=args.gcp_project)
+
+
     session_config = tf.ConfigProto(
         log_device_placement=False,
         inter_op_parallelism_threads=0,
@@ -534,10 +546,15 @@ def train(args):
         allow_soft_placement=True)
 
     run_config = tf.estimator.RunConfig(
+        cluster=tpu_cluster_resolver,
         model_dir=args.output_dir,
         save_summary_steps=500,
         save_checkpoints_steps=500,
-        session_config=session_config
+        session_config=session_config,
+        tpu_config=tf.contrib.tpu.TPUConfig(
+          iterations_per_loop=args.iterations_per_loop,
+          num_shards=args.num_tpu_cores,
+          per_host_input_for_training=is_per_host)
     )
 
     train_examples = None
@@ -583,6 +600,7 @@ def train(args):
     }
 
     estimator = tf.estimator.Estimator(
+        use_tpu=True,
         model_fn,
         params=params,
         config=run_config)
