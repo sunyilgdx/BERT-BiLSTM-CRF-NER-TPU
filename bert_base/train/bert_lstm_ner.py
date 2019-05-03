@@ -536,7 +536,7 @@ def train(args):
         vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
 
     tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
-        args.tpu_name, zone=args.tpu_zone, project=args.gcp_project)
+        tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
 
 
     session_config = tf.ConfigProto(
@@ -552,9 +552,9 @@ def train(args):
         save_checkpoints_steps=500,
         session_config=session_config,
         tpu_config=tf.contrib.tpu.TPUConfig(
-          iterations_per_loop=args.iterations_per_loop,
-          num_shards=args.num_tpu_cores,
-          per_host_input_for_training=is_per_host)
+          iterations_per_loop=1000,
+          num_shards=8,
+          per_host_input_for_training=tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2)
     )
 
     train_examples = None
