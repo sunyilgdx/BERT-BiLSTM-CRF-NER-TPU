@@ -596,7 +596,7 @@ def train(args):
       use_tpu=True,
       model_fn=model_fn,
       config=run_config,
-      train_batch_size=FLAGS.batch_size,
+      train_batch_size=batch_size,
       eval_batch_size=1,
       predict_batch_size=1)
 
