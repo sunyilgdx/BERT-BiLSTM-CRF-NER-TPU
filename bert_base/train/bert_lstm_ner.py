@@ -539,23 +539,16 @@ def train(args):
         tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
 
 
-    session_config = tf.ConfigProto(
-        log_device_placement=False,
-        inter_op_parallelism_threads=0,
-        intra_op_parallelism_threads=0,
-        allow_soft_placement=True)
-
-    run_config = tf.estimator.RunConfig(
-        cluster=tpu_cluster_resolver,
-        model_dir=args.output_dir,
+    run_config = tf.contrib.tpu.RunConfig(
+      cluster=tpu_cluster_resolver,
+      master=None,
+      model_dir=args.output_dir,
         save_summary_steps=500,
         save_checkpoints_steps=500,
-        session_config=session_config,
         tpu_config=tf.contrib.tpu.TPUConfig(
           iterations_per_loop=1000,
           num_shards=8,
-          per_host_input_for_training=tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2)
-    )
+          per_host_input_for_training=tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2))
 
     train_examples = None
     eval_examples = None
