@@ -101,7 +101,7 @@ class NerProcessor(DataProcessor):
         if labels is not None:
             try:
                 # 支持从文件中读取标签类型
-                if os.path.exists(labels) and os.path.isfile(labels):
+                if tf.gfile.Exists(labels):
                     with codecs.open(labels, 'r', encoding='utf-8') as fd:
                         for line in fd:
                             self.labels.append(line.strip())
@@ -112,13 +112,13 @@ class NerProcessor(DataProcessor):
             except Exception as e:
                 print(e)
         # 通过读取train文件获取标签的方法会出现一定的风险。
-        if os.path.exists(os.path.join(self.output_dir, 'label_list.pkl')):
-            with codecs.open(os.path.join(self.output_dir, 'label_list.pkl'), 'rb') as rf:
+        if tf.gfile.Exists(os.path.join(self.output_dir, 'label_list.pkl')):
+            with tf.gfile.Open(os.path.join(self.output_dir, 'label_list.pkl'), 'rb') as rf:
                 self.labels = pickle.load(rf)
         else:
             if len(self.labels) > 0:
                 self.labels = self.labels.union(set(["X", "[CLS]", "[SEP]"]))
-                with codecs.open(os.path.join(self.output_dir, 'label_list.pkl'), 'wb') as rf:
+                with tf.gfile.Open(os.path.join(self.output_dir, 'label_list.pkl'), 'wb') as rf:
                     pickle.dump(self.labels, rf)
             else:
                 self.labels = ["O", 'B-TIM', 'I-TIM', "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "X", "[CLS]", "[SEP]"]
@@ -501,28 +501,9 @@ def train(args):
             "was only trained up to sequence length %d" %
             (args.max_seq_length, bert_config.max_position_embeddings))
 
-    # 在re train 的时候，才删除上一轮产出的文件，在predicted 的时候不做clean
-    if args.clean and args.do_train:
-        if os.path.exists(args.output_dir):
-            def del_file(path):
-                ls = os.listdir(path)
-                for i in ls:
-                    c_path = os.path.join(path, i)
-                    if os.path.isdir(c_path):
-                        del_file(c_path)
-                    else:
-                        os.remove(c_path)
-
-            try:
-                del_file(args.output_dir)
-            except Exception as e:
-                print(e)
-                print('pleace remove the files of output dir and data.conf')
-                exit(-1)
 
     #check output dir exists
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+    tf.gfile.MakeDirs(args.output_dir)
 
     processor = processors[args.ner](args.output_dir)
 
@@ -597,7 +578,7 @@ def train(args):
     if args.do_train and args.do_eval:
         # 1. 将数据转化为tf_record 数据
         train_file = os.path.join(args.output_dir, "train.tf_record")
-        if not os.path.exists(train_file):
+        if not tf.gfile.Exists(train_file):
             filed_based_convert_examples_to_features(
                 train_examples, label_list, args.max_seq_length, tokenizer, train_file, args.output_dir)
 
@@ -610,7 +591,7 @@ def train(args):
         # estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
         eval_file = os.path.join(args.output_dir, "eval.tf_record")
-        if not os.path.exists(eval_file):
+        if not tf.gfile.Exists(eval_file):
             filed_based_convert_examples_to_features(
                 eval_examples, label_list, args.max_seq_length, tokenizer, eval_file, args.output_dir)
 
@@ -638,7 +619,7 @@ def train(args):
 
     if args.do_predict:
         token_path = os.path.join(args.output_dir, "token_test.txt")
-        if os.path.exists(token_path):
+        if tf.gfile.Exists(token_path):
             os.remove(token_path)
 
         with codecs.open(os.path.join(args.output_dir, 'label2id.pkl'), 'rb') as rf:
