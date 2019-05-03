@@ -413,19 +413,12 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
             #train_op = optimizer.optimizer(total_loss, learning_rate, num_train_steps)
             train_op = optimization.create_optimizer(
                  total_loss, learning_rate, num_train_steps, num_warmup_steps, True)
-            hook_dict = {}
-            hook_dict['loss'] = total_loss
-            hook_dict['global_steps'] = tf.train.get_or_create_global_step()
-            logging_hook = tf.train.LoggingTensorHook(
-                hook_dict, every_n_iter=args.save_summary_steps)
 
-            output_spec = tf.estimator.EstimatorSpec(
+            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
                 train_op=train_op,
-                training_hooks=[logging_hook],
-                scaffold_fn = scaffold_fn)
-
+                scaffold_fn=scaffold_fn)
         elif mode == tf.estimator.ModeKeys.EVAL:
             # 针对NER ,进行了修改
             def metric_fn(label_ids, pred_ids):
@@ -433,19 +426,20 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                     "eval_loss": tf.metrics.mean_squared_error(labels=label_ids, predictions=pred_ids),
                 }
 
-            eval_metrics = metric_fn(label_ids, pred_ids)
-            output_spec = tf.estimator.EstimatorSpec(
+            eval_metrics = (metric_fn,
+                      [label_ids, pred_ids])
+            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
                 eval_metric_ops=eval_metrics,
                 scaffold_fn = scaffold_fn
             )
+
         else:
-            output_spec = tf.estimator.EstimatorSpec(
+            output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 predictions=pred_ids,
-                scaffold_fn = scaffold_fn
-            )
+                scaffold_fn=scaffold_fn)
         return output_spec
 
     return model_fn
