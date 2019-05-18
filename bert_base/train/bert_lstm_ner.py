@@ -444,7 +444,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         else:
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
-                predictions=pred_ids,
+                predictions={'predictions': pred_ids},
                 scaffold_fn=scaffold_fn)
         return output_spec
 
@@ -652,6 +652,8 @@ def train(args):
             drop_remainder=predict_drop_remainder)
 
         result = estimator.predict(input_fn=predict_input_fn)
+        result = list(result)
+        result = [pred['predictions'] for pred in result]
         output_predict_file = os.path.join(args.output_dir, "label_test.txt")
 
         def result_to_pair(writer):
