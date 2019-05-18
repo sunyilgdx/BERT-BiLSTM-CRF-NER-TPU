@@ -688,7 +688,7 @@ def train(args):
         print(''.join(eval_result))
         # 写结果到文件中
         #with codecs.open(os.path.join(args.output_dir, 'predict_score.txt'), 'a', encoding='utf-8') as fd:
-        with tf.gfile.Open(os.path.join(args.output_dir, 'predict_score.txt'), "a") as fd:
+        with tf.gfile.Open(os.path.join(args.output_dir, 'predict_score.txt'), "w") as fd:
             fd.write(''.join(eval_result))
     # filter model
     if args.filter_adam_var:
