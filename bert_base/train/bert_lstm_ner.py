@@ -402,14 +402,14 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         scaffold_fn = tpu_scaffold
 
         # 打印变量名
-        logger.info("**** Trainable Variables ****")
+        tf.logging.info("**** Trainable Variables ****")
         #
         # # 打印加载模型的参数
         for var in tvars:
              init_string = ""
              if var.name in initialized_variable_names:
                  init_string = ", *INIT_FROM_CKPT*"
-             logger.info("  name = %s, shape = %s%s", var.name, var.shape,
+             tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
                              init_string)
 
         output_spec = None
@@ -625,7 +625,7 @@ def train(args):
     if args.do_predict:
         token_path = os.path.join(args.output_dir, "token_test.txt")
         if tf.gfile.Exists(token_path):
-            os.remove(token_path)
+            tf.gfile.Remove(token_path)
 
         #with codecs.open(os.path.join(args.output_dir, 'label2id.pkl'), 'rb') as rf:
         with tf.gfile.Open(os.path.join(args.output_dir, 'label2id.pkl'), "rb") as rf:
