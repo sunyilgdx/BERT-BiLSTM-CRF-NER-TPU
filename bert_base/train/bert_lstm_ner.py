@@ -177,11 +177,9 @@ def write_tokens(tokens, output_dir, mode):
     """
     if mode == "test":
         path = os.path.join(output_dir, "token_" + mode + ".txt")
-        with tf.gfile.Open(path, "a") as wf:
+        with tf.gfile.Open(path, "w") as wf:
           #wf = codecs.open(path, 'a', encoding='utf-8')
-          for token in tokens:
-              if token != "**NULL**":
-                  wf.write(token + '\n')
+          wf.write(''.join(token + '\n' for token in tokens if token != "**NULL**"))
 
 
 def convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer, output_dir, mode):
