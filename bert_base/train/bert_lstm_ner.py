@@ -402,15 +402,15 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         scaffold_fn = tpu_scaffold
 
         # 打印变量名
-        # logger.info("**** Trainable Variables ****")
+        logger.info("**** Trainable Variables ****")
         #
         # # 打印加载模型的参数
-        # for var in tvars:
-        #     init_string = ""
-        #     if var.name in initialized_variable_names:
-        #         init_string = ", *INIT_FROM_CKPT*"
-        #     logger.info("  name = %s, shape = %s%s", var.name, var.shape,
-        #                     init_string)
+        for var in tvars:
+             init_string = ""
+             if var.name in initialized_variable_names:
+                 init_string = ", *INIT_FROM_CKPT*"
+             logger.info("  name = %s, shape = %s%s", var.name, var.shape,
+                             init_string)
 
         output_spec = None
         if mode == tf.estimator.ModeKeys.TRAIN:
