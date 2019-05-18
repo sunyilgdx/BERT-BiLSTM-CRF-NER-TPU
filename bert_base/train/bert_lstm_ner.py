@@ -579,8 +579,8 @@ def train(args):
       model_fn=model_fn,
       config=run_config,
       train_batch_size=args.batch_size,
-      eval_batch_size=1,
-      predict_batch_size=1)
+      eval_batch_size=8,
+      predict_batch_size=8)
 
     if args.do_train and args.do_eval:
         # 1. 将数据转化为tf_record 数据
