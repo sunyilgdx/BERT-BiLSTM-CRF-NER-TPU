@@ -102,7 +102,8 @@ class NerProcessor(DataProcessor):
             try:
                 # 支持从文件中读取标签类型
                 if tf.gfile.Exists(labels):
-                    with codecs.open(labels, 'r', encoding='utf-8') as fd:
+                    #with codecs.open(labels, 'r', encoding='utf-8') as fd:
+                    with tf.gfile.Open(labels, "r") as fd:
                         for line in fd:
                             self.labels.append(line.strip())
                 else:
@@ -137,7 +138,8 @@ class NerProcessor(DataProcessor):
 
     def _read_data(self, input_file):
         """Reads a BIO data."""
-        with codecs.open(input_file, 'r', encoding='utf-8') as f:
+        #with codecs.open(input_file, 'r', encoding='utf-8') as f:
+        with tf.gfile.Open(input_file, "r") as f:
             lines = []
             words = []
             labels = []
@@ -175,11 +177,11 @@ def write_tokens(tokens, output_dir, mode):
     """
     if mode == "test":
         path = os.path.join(output_dir, "token_" + mode + ".txt")
-        wf = codecs.open(path, 'a', encoding='utf-8')
-        for token in tokens:
-            if token != "**NULL**":
-                wf.write(token + '\n')
-        wf.close()
+        with tf.gfile.Open(path, "a") as wf:
+          #wf = codecs.open(path, 'a', encoding='utf-8')
+          for token in tokens:
+              if token != "**NULL**":
+                  wf.write(token + '\n')
 
 
 def convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer, output_dir, mode):
@@ -199,8 +201,10 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     for (i, label) in enumerate(label_list, 1):
         label_map[label] = i
     # 保存label->index 的map
-    if not os.path.exists(os.path.join(output_dir, 'label2id.pkl')):
-        with codecs.open(os.path.join(output_dir, 'label2id.pkl'), 'wb') as w:
+    #if not os.path.exists(os.path.join(output_dir, 'label2id.pkl')):
+    if not tf.gfile.Exists(os.path.join(output_dir, 'label2id.pkl')):
+        with tf.gfile.Open(os.path.join(output_dir, 'label2id.pkl'), "wb") as w:
+        #with codecs.open(os.path.join(output_dir, 'label2id.pkl'), 'wb') as w:
             pickle.dump(label_map, w)
 
     textlist = example.text.split(' ')
@@ -456,7 +460,8 @@ def get_last_checkpoint(model_path):
         tf.logging.info('checkpoint file not exits:'.format(os.path.join(model_path, 'checkpoint')))
         return None
     last = None
-    with codecs.open(os.path.join(model_path, 'checkpoint'), 'r', encoding='utf-8') as fd:
+    #with codecs.open(os.path.join(model_path, 'checkpoint'), 'r', encoding='utf-8') as fd:
+    with tf.gfile.Open(os.path.join(model_path, 'checkpoint'), "r") as fd:
         for line in fd:
             line = line.strip().split(':')
             if len(line) != 2:
@@ -622,7 +627,8 @@ def train(args):
         if tf.gfile.Exists(token_path):
             os.remove(token_path)
 
-        with codecs.open(os.path.join(args.output_dir, 'label2id.pkl'), 'rb') as rf:
+        #with codecs.open(os.path.join(args.output_dir, 'label2id.pkl'), 'rb') as rf:
+        with tf.gfile.Open(os.path.join(args.output_dir, 'label2id.pkl'), "rb") as rf:
             label2id = pickle.load(rf)
             id2label = {value: key for key, value in label2id.items()}
 
@@ -676,13 +682,15 @@ def train(args):
                     idx += 1
                 writer.write(line + '\n')
 
-        with codecs.open(output_predict_file, 'w', encoding='utf-8') as writer:
+        #with codecs.open(output_predict_file, 'w', encoding='utf-8') as writer:
+        with tf.gfile.Open(output_predict_file, "w") as writer:
             result_to_pair(writer)
         from bert_base.train import conlleval
         eval_result = conlleval.return_report(output_predict_file)
         print(''.join(eval_result))
         # 写结果到文件中
-        with codecs.open(os.path.join(args.output_dir, 'predict_score.txt'), 'a', encoding='utf-8') as fd:
+        #with codecs.open(os.path.join(args.output_dir, 'predict_score.txt'), 'a', encoding='utf-8') as fd:
+        with tf.gfile.Open(os.path.join(args.output_dir, 'predict_score.txt'), "a") as fd:
             fd.write(''.join(eval_result))
     # filter model
     if args.filter_adam_var:
